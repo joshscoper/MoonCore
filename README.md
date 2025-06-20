@@ -26,20 +26,18 @@ MoonCore is the central data handler and API for the Moonfall Minecraft server n
 Add this to your plugin's `pom.xml` if you want to use MoonCore as a dependency:
 
 ```xml
-<repositories>
-    <repository>
-        <id>mooncore-repo</id>
-        <url>https://raw.githubusercontent.com/joshscoper/maven-repo/main</url>
-    </repository>
-</repositories>
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
 
-<dependencies>
-    <dependency>
-        <groupId>net.moonfall</groupId>
-        <artifactId>MoonCore</artifactId>
-        <version>1.0</version>
-    </dependency>
-</dependencies>
+<dependency>
+	    <groupId>com.github.joshscoper</groupId>
+	    <artifactId>MoonCore</artifactId>
+	    <version>API</version>
+	</dependency>
 ```
 
 > ℹ️ Make sure you’ve added the MoonCore JAR to your GitHub Pages repo or custom Maven host.
