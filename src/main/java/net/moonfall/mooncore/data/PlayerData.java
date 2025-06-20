@@ -42,6 +42,8 @@ public class PlayerData {
     // Tags and titles
     private final Set<String> tags = new HashSet<>();
     private final List<String> titles = new ArrayList<>();
+    private String activeTitle = "";
+
 
     // Settlement information
     private String settlementName = "";
@@ -215,4 +217,15 @@ public class PlayerData {
     public boolean isAcceptsMessages() {
         return acceptsMessages;
     }
+    public String getActiveTitle() {
+        return activeTitle;
+    }
+
+    public void setActiveTitle(String activeTitle) {
+        this.activeTitle = activeTitle;
+    }
+    public boolean isTitleEquipped(String titleId) {
+        return titleId != null && titleId.equalsIgnoreCase(activeTitle);
+    }
+
 }

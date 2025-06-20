@@ -1,6 +1,7 @@
 package net.moonfall.mooncore;
 
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.moonfall.mooncore.api.MoonCoreAPI;
 import net.moonfall.mooncore.commands.MoonCoreCommand;
 import net.moonfall.mooncore.data.PlayerDataManager;
 import net.moonfall.mooncore.db.DatabaseConnectionWatcher;
@@ -43,6 +44,8 @@ public final class MoonCore extends JavaPlugin {
         // Register listeners
         new PlayerDataListener(this);
 
+
+        MoonCoreAPI.init(this);
         getLogger().info("MoonCore has been enabled.");
     }
 

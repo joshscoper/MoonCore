@@ -17,7 +17,24 @@ public class PlayerDataDAO {
 
     public PlayerDataDAO(DatabaseManager db) {
         this.db = db;
+        ensureSchema();
     }
+
+    private void ensureSchema() {
+        try (Connection conn = db.getConnection()) {
+            DatabaseMetaData meta = conn.getMetaData();
+            try (ResultSet rs = meta.getColumns(null, null, "player_data", "active_title")) {
+                if (!rs.next()) {
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN active_title VARCHAR(255)");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void save(PlayerData data) {
         String sql = """
@@ -31,8 +48,8 @@ public class PlayerDataDAO {
                 active_party_id, last_messaged,
                 is_muted, is_banned, is_shadow_muted, mute_until, ban_until, ban_reason, punishment_log,
                 pvp_enabled, accepts_messages, show_join_leave_messages, allow_teleport_requests, show_hud,
-                metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                active_title, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 username = VALUES(username),
                 last_login = VALUES(last_login),
@@ -67,6 +84,7 @@ public class PlayerDataDAO {
                 show_join_leave_messages = VALUES(show_join_leave_messages),
                 allow_teleport_requests = VALUES(allow_teleport_requests),
                 show_hud = VALUES(show_hud),
+                active_title = VALUES(active_title),
                 metadata = VALUES(metadata)
             """;
 
@@ -117,7 +135,8 @@ public class PlayerDataDAO {
             stmt.setBoolean(34, data.isAllowTeleportRequests());
             stmt.setBoolean(35, data.isShowHud());
 
-            stmt.setString(36, gson.toJson(data.getMetadata()));
+            stmt.setString(36, data.getActiveTitle());
+            stmt.setString(37, gson.toJson(data.getMetadata()));
 
             stmt.executeUpdate();
 
@@ -186,6 +205,8 @@ public class PlayerDataDAO {
                     data.setShowJoinLeaveMessages(rs.getBoolean("show_join_leave_messages"));
                     data.setAllowTeleportRequests(rs.getBoolean("allow_teleport_requests"));
                     data.setShowHud(rs.getBoolean("show_hud"));
+
+                    data.setActiveTitle(rs.getString("active_title"));
 
                     Map<String, Object> meta = gson.fromJson(rs.getString("metadata"), mapObj);
                     if (meta != null) data.getMetadata().putAll(meta);
