@@ -1,0 +1,10 @@
+# MoonCore Configuration
+
+database:
+  host: 195.58.58.69
+  port: 3306
+  name: s1_MoonFall_Central_DB
+  username: u1_wQiW58kBxI
+  password: 1yhTFGrY.72u3^fS3i4uF9Uy
+  useSSL: false
+  pool-size: 10

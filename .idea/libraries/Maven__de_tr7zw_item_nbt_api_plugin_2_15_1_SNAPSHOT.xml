@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: de.tr7zw:item-nbt-api-plugin:2.15.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/tr7zw/item-nbt-api-plugin/2.15.1-SNAPSHOT/item-nbt-api-plugin-2.15.1-20250619.003022-5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/de/tr7zw/item-nbt-api-plugin/2.15.1-SNAPSHOT/item-nbt-api-plugin-2.15.1-20250619.003022-5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/tr7zw/item-nbt-api-plugin/2.15.1-SNAPSHOT/item-nbt-api-plugin-2.15.1-20250619.003022-5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

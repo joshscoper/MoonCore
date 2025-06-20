@@ -1,0 +1,16 @@
+name: MoonCore
+version: '${project.version}'
+main: net.moonfall.mooncore.MoonCore
+api-version: 1.20
+depend: [NBTAPI]
+commands:
+  mooncore:
+    description: Root command for MoonCore administration.
+    usage: /mooncore [reload|flush|debug]
+    permission: mooncore.admin
+    permission-message: You do not have permission to use this command.
+
+permissions:
+  mooncore.admin:
+    description: Allows use of /mooncore commands.
+    default: op
