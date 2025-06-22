@@ -33,10 +33,10 @@ Add this to your plugin's `pom.xml` if you want to use MoonCore as a dependency:
 		</repository>
 	</repositories>
 
-<dependency>
+	<dependency>
 	    <groupId>com.github.joshscoper</groupId>
 	    <artifactId>MoonCore</artifactId>
-	    <version>API</version>
+	    <version>{Version}</version>
 	</dependency>
 ```
 
