@@ -4,9 +4,7 @@ import net.moonfall.mooncore.MoonCore;
 import net.moonfall.mooncore.data.PlayerData;
 import net.moonfall.mooncore.data.PlayerDataManager;
 import net.moonfall.mooncore.db.PlayerDataDAO;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -25,9 +23,19 @@ public class MoonCoreAPI {
         }
     }
 
+    public static boolean isInitialized() {
+        return plugin != null;
+    }
+
     private static PlayerDataManager getManager() {
+        if (plugin == null) {
+            throw new IllegalStateException("MoonCoreAPI has not been initialized. Call MoonCoreAPI.init() during plugin enable.");
+        }
         return plugin.getPlayerDataManager();
     }
+
+
+
 
     // === Online Cache Access ===
 
