@@ -25,22 +25,8 @@ public class MoonCoreAPI {
         }
     }
 
-    /**
-     * Safe getter that falls back to Bukkit's plugin loader if init() was missed.
-     */
-    private static MoonCore getPlugin() {
-        if (plugin == null) {
-            plugin = JavaPlugin.getPlugin(MoonCore.class);
-            if (!warned) {
-                Bukkit.getLogger().warning("[MoonCoreAPI] Plugin was not explicitly initialized. Falling back to getPlugin().");
-                warned = true;
-            }
-        }
-        return plugin;
-    }
-
     private static PlayerDataManager getManager() {
-        return getPlugin().getPlayerDataManager();
+        return plugin.getPlayerDataManager();
     }
 
     // === Online Cache Access ===
@@ -60,7 +46,7 @@ public class MoonCoreAPI {
             Optional<PlayerData> cached = getManager().getCached(uuid);
             if (cached.isPresent()) return cached.get();
 
-            PlayerDataDAO dao = new PlayerDataDAO(getPlugin().getDatabaseManager());
+            PlayerDataDAO dao = new PlayerDataDAO(plugin.getDatabaseManager());
             PlayerData data = dao.load(uuid);
 
             if (data == null) {
