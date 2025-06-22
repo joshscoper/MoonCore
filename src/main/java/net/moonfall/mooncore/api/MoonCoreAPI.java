@@ -4,23 +4,43 @@ import net.moonfall.mooncore.MoonCore;
 import net.moonfall.mooncore.data.PlayerData;
 import net.moonfall.mooncore.data.PlayerDataManager;
 import net.moonfall.mooncore.db.PlayerDataDAO;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class MoonCoreAPI {
 
-    private static MoonCore instance;
+    private static MoonCore plugin;
+    private static boolean warned = false;
 
+    /**
+     * Initialize the MoonCoreAPI. Should be called from MoonCore's onEnable.
+     */
     public static void init(MoonCore core) {
-        instance = core;
+        if (plugin == null) {
+            plugin = core;
+        }
+    }
+
+    /**
+     * Safe getter that falls back to Bukkit's plugin loader if init() was missed.
+     */
+    private static MoonCore getPlugin() {
+        if (plugin == null) {
+            plugin = JavaPlugin.getPlugin(MoonCore.class);
+            if (!warned) {
+                Bukkit.getLogger().warning("[MoonCoreAPI] Plugin was not explicitly initialized. Falling back to getPlugin().");
+                warned = true;
+            }
+        }
+        return plugin;
     }
 
     private static PlayerDataManager getManager() {
-        if (instance == null) throw new IllegalStateException("MoonCoreAPI not initialized.");
-        return instance.getPlayerDataManager();
+        return getPlugin().getPlayerDataManager();
     }
 
     // === Online Cache Access ===
@@ -40,7 +60,7 @@ public class MoonCoreAPI {
             Optional<PlayerData> cached = getManager().getCached(uuid);
             if (cached.isPresent()) return cached.get();
 
-            PlayerDataDAO dao = new PlayerDataDAO(instance.getDatabaseManager());
+            PlayerDataDAO dao = new PlayerDataDAO(getPlugin().getDatabaseManager());
             PlayerData data = dao.load(uuid);
 
             if (data == null) {
@@ -104,5 +124,65 @@ public class MoonCoreAPI {
         return getManager().getCached(uuid)
                 .map(PlayerData::getNameColor)
                 .orElse("WHITE");
+    }
+
+    // === Titles ===
+
+    public static void setActiveTitle(UUID uuid, String titleId) {
+        getManager().getCached(uuid).ifPresent(data -> {
+            data.setActiveTitle(titleId);
+            savePlayerDataAsync(data);
+        });
+    }
+
+    public static String getActiveTitle(UUID uuid) {
+        return getManager().getCached(uuid)
+                .map(PlayerData::getActiveTitle)
+                .orElse(null);
+    }
+
+    public static void clearActiveTitle(UUID uuid) {
+        getManager().getCached(uuid).ifPresent(data -> {
+            data.setActiveTitle(null);
+            savePlayerDataAsync(data);
+        });
+    }
+
+    public static List<String> getUnlockedTitles(UUID uuid) {
+        return getManager().getCached(uuid)
+                .map(data -> {
+                    List<String> result = new ArrayList<>();
+                    for (Object o : data.getTitles()) {
+                        if (o instanceof String s) {
+                            result.add(s);
+                        }
+                    }
+                    return result;
+                })
+                .orElse(List.of());
+    }
+
+
+
+    public static boolean hasTitleUnlocked(UUID uuid, String title) {
+        return getManager().getCached(uuid)
+                .map(data -> data.getTitles().contains(title))
+                .orElse(false);
+    }
+
+    public static void unlockTitle(UUID uuid, String title) {
+        getManager().getCached(uuid).ifPresent(data -> {
+            if (data.getTitles().add(title)) {
+                savePlayerDataAsync(data);
+            }
+        });
+    }
+
+    public static void removeTitle(UUID uuid, String title) {
+        getManager().getCached(uuid).ifPresent(data -> {
+            if (data.getTitles().remove(title)) {
+                savePlayerDataAsync(data);
+            }
+        });
     }
 }

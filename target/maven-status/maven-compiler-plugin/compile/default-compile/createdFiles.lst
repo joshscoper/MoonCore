@@ -5,14 +5,11 @@ net\moonfall\mooncore\MoonCore.class
 net\moonfall\mooncore\api\PlayerSyncListener.class
 net\moonfall\mooncore\commands\MoonCoreCommand.class
 net\moonfall\mooncore\data\PlayerData.class
-net\moonfall\mooncore\db\PlayerDataDAO$4.class
 net\moonfall\mooncore\api\MoonCoreAPI.class
-net\moonfall\mooncore\db\PlayerDataDAO$3.class
-net\moonfall\mooncore\db\PlayerDataDAO$2.class
+net\moonfall\mooncore\db\SchemaUpdater.class
 net\moonfall\mooncore\data\PlayerDataManager.class
 net\moonfall\mooncore\listeners\PlayerDataListener.class
 net\moonfall\mooncore\util\InventorySerializer.class
 net\moonfall\mooncore\util\MessageUtil.class
 net\moonfall\mooncore\db\PlayerDataDAO.class
 net\moonfall\mooncore\util\ItemNBTUtil.class
-net\moonfall\mooncore\db\PlayerDataDAO$1.class

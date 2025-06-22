@@ -1,12 +1,10 @@
 package net.moonfall.mooncore.db;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import net.moonfall.mooncore.data.PlayerData;
 import net.moonfall.mooncore.util.InventorySerializer;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.*;
 
@@ -17,24 +15,48 @@ public class PlayerDataDAO {
 
     public PlayerDataDAO(DatabaseManager db) {
         this.db = db;
-        ensureSchema();
+        SchemaUpdater.ensureTableAndColumns(db, "player_data", expectedColumns);
     }
 
-    private void ensureSchema() {
-        try (Connection conn = db.getConnection()) {
-            DatabaseMetaData meta = conn.getMetaData();
-            try (ResultSet rs = meta.getColumns(null, null, "player_data", "active_title")) {
-                if (!rs.next()) {
-                    try (Statement stmt = conn.createStatement()) {
-                        stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN active_title VARCHAR(255)");
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
+    private static final Map<String, String> expectedColumns = Map.ofEntries(
+            Map.entry("uuid", "VARCHAR(36) PRIMARY KEY"),
+            Map.entry("username", "VARCHAR(64)"),
+            Map.entry("first_login", "BIGINT"),
+            Map.entry("last_login", "BIGINT"),
+            Map.entry("last_ip", "VARCHAR(64)"),
+            Map.entry("level", "INT"),
+            Map.entry("xp", "INT"),
+            Map.entry("playtime_ticks", "BIGINT"),
+            Map.entry("balance", "DOUBLE"),
+            Map.entry("inventory", "LONGTEXT"),
+            Map.entry("enderchest", "LONGTEXT"),
+            Map.entry("armor", "LONGTEXT"),
+            Map.entry("tags", "TEXT"),
+            Map.entry("titles", "TEXT"),
+            Map.entry("inbox", "TEXT"),
+            Map.entry("friends", "TEXT"),
+            Map.entry("ignored", "TEXT"),
+            Map.entry("name_color", "VARCHAR(32)"),
+            Map.entry("unlocked_name_colors", "TEXT"),
+            Map.entry("settlement_name", "VARCHAR(255)"),
+            Map.entry("settlement_rank", "VARCHAR(255)"),
+            Map.entry("active_party_id", "VARCHAR(36)"),
+            Map.entry("last_messaged", "VARCHAR(36)"),
+            Map.entry("is_muted", "BOOLEAN"),
+            Map.entry("is_banned", "BOOLEAN"),
+            Map.entry("is_shadow_muted", "BOOLEAN"),
+            Map.entry("mute_until", "BIGINT"),
+            Map.entry("ban_until", "BIGINT"),
+            Map.entry("ban_reason", "TEXT"),
+            Map.entry("punishment_log", "TEXT"),
+            Map.entry("pvp_enabled", "BOOLEAN"),
+            Map.entry("accepts_messages", "BOOLEAN"),
+            Map.entry("show_join_leave_messages", "BOOLEAN"),
+            Map.entry("allow_teleport_requests", "BOOLEAN"),
+            Map.entry("show_hud", "BOOLEAN"),
+            Map.entry("active_title", "VARCHAR(255)"),
+            Map.entry("metadata", "LONGTEXT")
+    );
 
     public void save(PlayerData data) {
         String sql = """
@@ -169,19 +191,14 @@ public class PlayerDataDAO {
                     data.setEnderChest(InventorySerializer.deserialize(rs.getString("enderchest")));
                     data.setArmor(InventorySerializer.deserialize(rs.getString("armor")));
 
-                    Type setStr = new TypeToken<Set<String>>() {}.getType();
-                    Type listStr = new TypeToken<List<String>>() {}.getType();
-                    Type setUUID = new TypeToken<Set<UUID>>() {}.getType();
-                    Type mapObj = new TypeToken<Map<String, Object>>() {}.getType();
-
-                    data.getTags().addAll(gson.fromJson(rs.getString("tags"), setStr));
-                    data.getTitles().addAll(gson.fromJson(rs.getString("titles"), listStr));
-                    data.getInbox().addAll(gson.fromJson(rs.getString("inbox"), listStr));
-                    data.getFriends().addAll(gson.fromJson(rs.getString("friends"), setUUID));
-                    data.getIgnored().addAll(gson.fromJson(rs.getString("ignored"), setUUID));
+                    data.getTags().addAll(safeStringSet(rs.getString("tags")));
+                    data.getTitles().addAll(safeStringList(rs.getString("titles")));
+                    data.getInbox().addAll(safeStringList(rs.getString("inbox")));
+                    data.getFriends().addAll(safeUUIDSet(rs.getString("friends")));
+                    data.getIgnored().addAll(safeUUIDSet(rs.getString("ignored")));
 
                     data.setNameColor(rs.getString("name_color"));
-                    data.getUnlockedNameColors().addAll(gson.fromJson(rs.getString("unlocked_name_colors"), setStr));
+                    data.getUnlockedNameColors().addAll(safeStringSet(rs.getString("unlocked_name_colors")));
 
                     data.setSettlementName(rs.getString("settlement_name"));
                     data.setSettlementRank(rs.getString("settlement_rank"));
@@ -198,7 +215,7 @@ public class PlayerDataDAO {
                     data.setMuteUntil(rs.getLong("mute_until"));
                     data.setBanUntil(rs.getLong("ban_until"));
                     data.setBanReason(rs.getString("ban_reason"));
-                    data.getPunishmentLog().addAll(gson.fromJson(rs.getString("punishment_log"), listStr));
+                    data.getPunishmentLog().addAll(safeStringList(rs.getString("punishment_log")));
 
                     data.setPvpEnabled(rs.getBoolean("pvp_enabled"));
                     data.setAcceptsMessages(rs.getBoolean("accepts_messages"));
@@ -208,17 +225,68 @@ public class PlayerDataDAO {
 
                     data.setActiveTitle(rs.getString("active_title"));
 
-                    Map<String, Object> meta = gson.fromJson(rs.getString("metadata"), mapObj);
-                    if (meta != null) data.getMetadata().putAll(meta);
+                    data.getMetadata().putAll(safeMetadata(rs.getString("metadata")));
 
                     return data;
                 }
-            }
 
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         return null;
+    }
+
+    private List<String> safeStringList(String json) {
+        try {
+            List<?> raw = gson.fromJson(json, List.class);
+            List<String> result = new ArrayList<>();
+            for (Object o : raw) if (o instanceof String s) result.add(s);
+            return result;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private Set<String> safeStringSet(String json) {
+        try {
+            Set<?> raw = gson.fromJson(json, Set.class);
+            Set<String> result = new HashSet<>();
+            for (Object o : raw) if (o instanceof String s) result.add(s);
+            return result;
+        } catch (Exception e) {
+            return Collections.emptySet();
+        }
+    }
+
+    private Set<UUID> safeUUIDSet(String json) {
+        try {
+            Set<?> raw = gson.fromJson(json, Set.class);
+            Set<UUID> result = new HashSet<>();
+            for (Object o : raw) {
+                if (o instanceof String s) {
+                    try {
+                        result.add(UUID.fromString(s));
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            return Collections.emptySet();
+        }
+    }
+
+    private Map<String, Object> safeMetadata(String json) {
+        try {
+            Map<?, ?> raw = gson.fromJson(json, Map.class);
+            Map<String, Object> result = new HashMap<>();
+            for (Map.Entry<?, ?> e : raw.entrySet()) {
+                if (e.getKey() instanceof String key) result.put(key, e.getValue());
+            }
+            return result;
+        } catch (Exception e) {
+            return Collections.emptyMap();
+        }
     }
 }
